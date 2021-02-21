@@ -7,6 +7,9 @@ This file creates your application.
 
 from app import app
 from flask import render_template, request, redirect, url_for, flash
+from app import mail
+from app.forms import ContactForm
+from flask_mail import Message, Mail
 
 
 ###
@@ -25,6 +28,20 @@ def about():
     return render_template('about.html', name="Mary Jane")
 
 
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    form = ContactForm()
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            msg= Message(form.subject.data, sender=(form.name.data,form.email.data), recipients=["8eec34c04c-3f34ac@inbox.mailtrap.io"])
+            msg.body = form.message.data
+            mail.send(msg)
+
+        flash('Your email was successfully sent')
+        return redirect(url_for('home'))
+        flash_errors(form)
+    return render_template('contact.html', form=form)
 ###
 # The functions below should be applicable to all Flask apps.
 ###
@@ -34,7 +51,7 @@ def about():
 def flash_errors(form):
     for field, errors in form.errors.items():
         for error in errors:
-            flash(u"Error in the %s field - %s" % (
+            flash("Error in the %s field - %s" % (
                 getattr(form, field).label.text,
                 error
             ), 'danger')
